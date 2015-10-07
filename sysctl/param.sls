@@ -1,17 +1,13 @@
-# -*- coding: utf-8 -*-
-# vim: ft=sls
-
-{## import settings from map.jinja ##}
 {% from "sysctl/map.jinja" import sysctl_settings with context %}
 
-{% for param in  sysctl_settings.get('params', {}) %}
-  {% if param is mapping %}
-sysctl-present-{{ param.name }}:
+{% for param, setting in salt['pillar.get']('sysctl:params', {}).iteritems() %}
+sysctl_present_{{ param }}:
   sysctl.present:
-    - name: {{ param.name }}
-    - value: {{ param.value }}
-    {% if param.config is defined %}
-    - config: {{ sysctl_settings.config.location }}/{{ param.config }}
+    - name: {{ param }}
+    - value: {{ setting.get('value') }}
+    {% if setting.get('config') is defined %}
+    - config: {{ sysctl_settings.config.location }}/{{ setting.get('config') }}
     {% endif %}
-  {% endif %}
+    - require:
+      - sls: sysctl.package
 {% endfor %}
